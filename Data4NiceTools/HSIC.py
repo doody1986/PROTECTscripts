@@ -4,6 +4,7 @@ import numpy as np
 import pandas as pd
 import sys
 import csv
+import math
 import sklearn.metrics
 from sklearn import preprocessing
 import collections
@@ -114,7 +115,7 @@ def Run(raw_data_file):
 
     X = np.array(vector)
     Y = np.array(label)
-    result = HSIC(X, Y, 'Gaussian') / HSIC(X, X, 'Gaussian')
+    result = HSIC(X, Y, 'Gaussian') / math.sqrt(math.pow(HSIC(X, X, 'Gaussian'),2) + math.pow(HSIC(Y, Y, 'Gaussian'),2))
     results[column].append(result)
   print results
   print len(results)
@@ -123,9 +124,6 @@ def Run(raw_data_file):
   for column in results:
     feature_list.append(column)
     correlation_results_list.append(results[column][0])
-    if results[column][0] > 0.05:
-      print column
-
 
   n_groups = len(results) 
   opacity = 0.8
@@ -143,10 +141,12 @@ def Run(raw_data_file):
   
   plt.grid()
   plt.xticks(index + bar_width, feature_list, rotation='vertical')
+  #plt.axis('tight')
+  plt.autoscale(enable=True, axis='x', tight=True)
   #plt.legend(bbox_to_anchor=(0., 1.02, 1., .102), loc=3,
   #           ncol=3, mode="expand", borderaxespad=0.)
   plt.tight_layout()
-  plt.savefig('hsic.png', format='png', bbox_inches='tight')
+  plt.savefig(raw_data_file[:-4] + '_' + 'hsic.png', format='png', bbox_inches='tight')
 
 
 def main():

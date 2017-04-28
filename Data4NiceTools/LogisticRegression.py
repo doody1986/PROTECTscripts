@@ -7,10 +7,12 @@ import csv
 import collections
 import matplotlib.pyplot as plt
 from sklearn import linear_model
+from sklearn.model_selection import cross_val_score
 
 
-field_list = ['WTPREPREG', 'FVPREGSTWT', 'FVCURRWT', 'MR1WGHTLBR', 'MR1HCT', \
-              'MR1PLTS', 'MR1NEUTRPH', 'MR1LYMPHS']
+field_list = ['WTPREPREG', 'FVPREGSTWT', 'FVCURRWT', 'MR1WGHTLBR', 'MR1RBC', 'MR1HCT', \
+              'MR1PLTS', 'MR1WBC', 'MR1NEUTRPH', 'MR1LYMPHS', 'MR1EOSINPHS']
+other_field_list = ['PARTJOBS', 'VOLJOBS']
 
 def Run(raw_data_file):
   data = pd.read_csv(raw_data_file)
@@ -35,16 +37,20 @@ def Run(raw_data_file):
   x = np.array(samples)
   x = np.reshape(x, (num_samples_final, num_features))
   y = np.array(labels)
-  num_test_samples = 50
-  num_training_samples = num_samples_final - num_test_samples
+  print "Number of samples: " + str(num_samples_final)
+  print "Number of features: " + str(num_features)
+
+  # Shuffle the whole samples
+  indices = np.arange(x.shape[0])
+  np.random.seed()
+  np.random.shuffle(indices)
+  x_train = x[indices]
+  y_train = y[indices]
+
   logreg = linear_model.LogisticRegression()
-  logreg.fit(x[:num_training_samples], y[:num_training_samples])
-  prediction = logreg.predict(x[num_training_samples:])
-  print "Overall sample: " + str(num_samples_final)
-  print "Prediction: "
-  print prediction
-  print "Label:"
-  print y[num_training_samples:]
+  scores = cross_val_score(logreg, x_train, y_train, cv=10, scoring='f1')
+  print "F1 score: "
+  print scores
 
 def main():
   print ("Start program.")

@@ -25,12 +25,25 @@ def NMI(raw_data_file):
     results[column].append(normalized_mutual_info_score(np.array(vector),
                                                 np.array(label)))
   print results
+  print "Number of Samples: " + str(len(data.index))
+  print "Number of Features: " + str(len(data.columns))
   print len(results)
   feature_list = []
   correlation_results_list = []
   for column in results:
     feature_list.append(column)
     correlation_results_list.append(results[column][0])
+  
+  print "Most related features:"
+  numerical_threshold = [0.125, 0.01]
+  categorical_threshold = [0.04, 0]
+  for column in results:
+    if results[column][0] > categorical_threshold[0]:
+      print column + " " + str(results[column][0])
+  print "Least related features:"
+  for column in results:
+    if results[column][0] < categorical_threshold[1]:
+      print column + " " + str(results[column][0])
   n_groups = len(results) 
   opacity = 0.8
   index = np.arange(n_groups)
@@ -45,12 +58,14 @@ def NMI(raw_data_file):
   plt.xlabel('Fields')
   plt.ylabel('Correlation Results')
   
+  #plt.axis('tight')
+  plt.autoscale(enable=True, axis='x', tight=True)
   plt.grid()
   plt.xticks(index + bar_width, feature_list, rotation='vertical')
   #plt.legend(bbox_to_anchor=(0., 1.02, 1., .102), loc=3,
   #           ncol=3, mode="expand", borderaxespad=0.)
   plt.tight_layout()
-  plt.savefig('nmi.png', format='png', bbox_inches='tight')
+  plt.savefig(raw_data_file[:-4] + '_' + 'nmi.png', format='png', bbox_inches='tight')
 
 
 def main():
