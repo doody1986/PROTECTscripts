@@ -12,7 +12,7 @@ from sklearn.model_selection import cross_val_score
 
 field_list = ['WTPREPREG', 'FVPREGSTWT', 'FVCURRWT', 'MR1WGHTLBR', 'MR1RBC', 'MR1HCT', \
               'MR1PLTS', 'MR1WBC', 'MR1NEUTRPH', 'MR1LYMPHS', 'MR1EOSINPHS']
-other_field_list = ['PARTJOBS', 'VOLJOBS']
+#field_list = ['PARTJOBS', 'VOLJOBS']
 
 def Run(raw_data_file):
   data = pd.read_csv(raw_data_file)
@@ -40,17 +40,51 @@ def Run(raw_data_file):
   print "Number of samples: " + str(num_samples_final)
   print "Number of features: " + str(num_features)
 
-  # Shuffle the whole samples
-  indices = np.arange(x.shape[0])
-  np.random.seed()
-  np.random.shuffle(indices)
-  x_train = x[indices]
-  y_train = y[indices]
+  final_x = np.empty((0, num_features))
+  final_y = np.empty((1, 0))
+  preterm_idx = []
+  num_preterm = 0
+  for i in range(num_samples_final):
+    if y[i] == 2:
+      final_x = np.vstack((final_x, x[i]))
+      preterm_idx.append(i)
+      final_y = np.append(final_y, y[i])
+      num_preterm += 1
+  count = 0
+  for i in preterm_idx:
+    temp_x = np.delete(x, i-count, 0)
+    temp_y = np.delete(y, i-count, 0)
+    count += 1
 
-  logreg = linear_model.LogisticRegression()
-  scores = cross_val_score(logreg, x_train, y_train, cv=10, scoring='f1')
-  print "F1 score: "
-  print scores
+  print "Number of preterm: " + str(num_preterm)
+  for num in range(1, 1):
+    for i in range(num_preterm * num):
+      idx = np.random.random_integers(0, temp_x.shape[0]-1)
+      final_x = np.vstack((final_x, temp_x[idx]))
+      final_y = np.append(final_y, temp_y[i])
+    indices = np.arange(final_x.shape[0])
+    np.random.seed()
+    np.random.shuffle(indices)
+    final_x = final_x[indices]
+    final_y = final_y[indices]
+
+    # Shuffle the whole samples
+    #indices = np.arange(x.shape[0])
+    #np.random.seed()
+    #np.random.shuffle(indices)
+    #x_train = x[indices]
+    #y_train = y[indices]
+
+    logreg = linear_model.LogisticRegression()
+    f1_scores = cross_val_score(logreg, final_x, final_y, cv=10, scoring='f1')
+    precision = cross_val_score(logreg, final_x, final_y, cv=10, scoring='precision')
+    recall = cross_val_score(logreg, final_x, final_y, cv=10, scoring='recall')
+    auc = cross_val_score(logreg, final_x, final_y, cv=10, scoring='roc_auc')
+    print str(num) +" X preterm samples"
+    #print "Averaged F1 score: " + str(sum(f1_scores) / 10)
+    #print "Averaged precision: " + str(sum(precision) / 10)
+    #print "Averaged recall: " + str(sum(recall) / 10)
+    print auc
 
 def main():
   print ("Start program.")

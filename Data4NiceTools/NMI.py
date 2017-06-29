@@ -26,7 +26,8 @@ def NMI(raw_data_file):
                                                 np.array(label)))
   print results
   print "Number of Samples: " + str(len(data.index))
-  print "Number of Features: " + str(len(data.columns))
+  num_features = len(data.columns)
+  print "Number of Features: " + str(num_features)
   print len(results)
   feature_list = []
   correlation_results_list = []
@@ -34,9 +35,10 @@ def NMI(raw_data_file):
     feature_list.append(column)
     correlation_results_list.append(results[column][0])
   
+  
   print "Most related features:"
   numerical_threshold = [0.125, 0.01]
-  categorical_threshold = [0.04, 0]
+  categorical_threshold = [0.015, 0]
   for column in results:
     if results[column][0] > categorical_threshold[0]:
       print column + " " + str(results[column][0])
