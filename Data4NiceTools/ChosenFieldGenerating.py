@@ -8,7 +8,8 @@ from enum import Enum
 class DataType(Enum):
   TEXT = 0,
   RADIO = 1,
-  NUMBER = 2
+  NUMBER = 2,
+  MIXED = 3
 
 extract_all = False
 
@@ -19,14 +20,14 @@ type_index = 3
 choice_index = 5
 text_type_index = 7
 
-human_subject_form_list = ["first_visit", "med_rec_v1", "product_use"]
-
 def Extract(csv_file, data_type):
   readfile = csv.reader(open(csv_file, "r"))
   if data_type == DataType.RADIO:
     prefix = "categorical_"
   elif data_type == DataType.NUMBER:
     prefix = "numerical_"
+  elif data_type == DataType.MIXED:
+    prefix = "cate_numer_"
   else:
     prefix = "text_"
   writefile = csv.writer(open(prefix+"chosenfields.csv", "w"))
@@ -38,19 +39,19 @@ def Extract(csv_file, data_type):
   for row in readfile:
     new_row = []
     if row[type_index] == "radio" or row[type_index] == 'dropdown':
-      if data_type == DataType.RADIO:
+      if data_type == DataType.RADIO or data_type == DataType.MIXED:
         new_row.append(row[field_index].upper())
         writefile.writerow(new_row)
       else:
         continue
     elif row[text_type_index] == "number" or row[text_type_index] == "integer":
-      if data_type == DataType.NUMBER:
+      if data_type == DataType.NUMBER or data_type == DataType.MIXED:
         new_row.append(row[field_index].upper())
         writefile.writerow(new_row)
       else:
         continue
     elif row[type_index] == 'checkbox':
-      if data_type == DataType.RADIO:
+      if data_type == DataType.RADIO or data_type == DataType.MIXED:
         field_choices = row[choice_index]
         sepintlist = field_choices.split('|')
         for item in sepintlist:
@@ -64,11 +65,6 @@ def Extract(csv_file, data_type):
         writefile.writerow(new_row)
       else:
         continue
-
-  # Biological data
-  #key_field = "CONC"
-  #row = [key_field]
-  #writefile.writerow(row)
 
   # Postpartum label
   birth_label = "PPTERM"
@@ -90,6 +86,8 @@ def main():
     data_type = DataType.RADIO
   elif data_type_str == "TEXT":
     data_type = DataType.TEXT
+  elif data_type_str == "MIXED":
+    data_type = DataType.MIXED
   else:
     print "Un-known type"
     exit()

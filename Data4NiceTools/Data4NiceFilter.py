@@ -4,8 +4,49 @@ import numpy as np
 import pandas as pd
 import sys
 import csv
+import time
 
-def Filter(chosen_fields_file, raw_data_file):
+# According the data dictionary
+field_index = 0
+form_index = 1
+type_index = 3
+choice_index = 5
+text_type_index = 7
+
+text_fields = []
+categorical_fields = []
+checkbox_fields = []
+numerical_fields = []
+mixed_fields = []
+def Extract(dd_file, data_type):
+  readfile = csv.reader(open(dd_file, "r"))
+
+  # Human subject data
+  for row in readfile:
+    if row[type_index] == "radio" or row[type_index] == 'dropdown':
+      categorical_fields.append(row[field_index].upper())
+      mixed_fields.append(row[field_index].upper())
+    elif row[text_type_index] == "number" or row[text_type_index] == "integer":
+      numerical_fields.append(row[field_index].upper())
+      mixed_fields.append(row[field_index].upper())
+    elif row[type_index] == 'checkbox':
+      field_choices = row[choice_index]
+      sepintlist = field_choices.split('|')
+      for item in sepintlist:
+        found_int = re.search("\d+", item)
+        checkbox_fields.append(row[field_index].upper()+"__"+str(found_int.group()))
+        mixed_fields.append(row[field_index].upper()+"__"+str(found_int.group()))
+    else:
+      text_fields.append(row[field_index].upper())
+
+def main():
+  filename = "human_subjects_dd.csv"
+  Extract(filename, data_type)
+
+if __name__ == '__main__':
+  main()
+
+def Filter(chosen_fields, raw_data_file):
   # Get chosen fields
   readfile = csv.reader(open(chosen_fields_file, "r"))
   chosen_fields = []
@@ -13,10 +54,14 @@ def Filter(chosen_fields_file, raw_data_file):
     chosen_fields.append(row[0])
 
   data = pd.read_csv(raw_data_file)
+  no_ambiguous_data = True
+  if no_ambiguous_data:
+    df_dict[file_name].replace('888', np.nan, inplace=True, regex=True)
+    df_dict[file_name].replace('999', np.nan, inplace=True, regex=True)
   print "The column number of raw data BEFORE filtered is: " + str(len(data.columns))
   for column in data.columns:
     if column == "STUDY_ID":
-      data.drop(column, axis=1, inplace=True)
+      #data.drop(column, axis=1, inplace=True)
       continue
     if column == "PPTERM":
       continue
@@ -67,7 +112,7 @@ def Filter(chosen_fields_file, raw_data_file):
   print "The row number of raw data AFTER filtered is: " + str(len(data.index))
 
   #data.fillna(0, inplace=True)
-  data.to_csv("filtered_" + chosen_fields_file[:-4] + "_" + raw_data_file)
+  data.to_csv("filtered_" + chosen_fields_file[:-4] + "_" + raw_data_file[:-4] + "_" + time.strftime("%m%d%Y") + ".csv")
 
 
 def main():
